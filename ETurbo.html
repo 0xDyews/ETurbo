@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motorbike Sound Simulator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #282c34;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        .turbo-button {
+            background-color: #ff5722;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 24px;
+            padding: 20px 40px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .turbo-button:hover {
+            background-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="turboButton" class="turbo-button">Turbo!</button>
+    </div>
+    <audio id="accelerationSound" src="motorbike_acceleration.wav" loop></audio>
+    <audio id="turboSound" src="turbocharger.wav"></audio>
+    <audio id="continuousSound" src="motorbike_continuous.wav" loop></audio>
+    <audio id="decelerationSound" src="motorbike_deceleration.wav" loop></audio>
+    <script>
+        let accelerating = false;
+        let pressStartTime = 0;
+        let continuousStarted = false;
+
+        const accelerationSound = document.getElementById('accelerationSound');
+        const turboSound = document.getElementById('turboSound');
+        const continuousSound = document.getElementById('continuousSound');
+        const decelerationSound = document.getElementById('decelerationSound');
+        const turboButton = document.getElementById('turboButton');
+
+        turboButton.addEventListener('touchstart', () => {
+            if (!accelerating) {
+                accelerating = true;
+                pressStartTime = Date.now();
+                accelerationSound.play();
+                continuousStarted = false;
+            }
+        });
+
+        turboButton.addEventListener('touchend', () => {
+            if (accelerating) {
+                accelerating = false;
+                accelerationSound.pause();
+                accelerationSound.currentTime = 0; // Reset sound
+                turboSound.play();
+                decelerationSound.play();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'VolumeUp') {
+                if (!accelerating) {
+                    accelerating = true;
+                    pressStartTime = Date.now();
+                    accelerationSound.play();
+                    continuousStarted = false;
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            if (event.key === 'VolumeUp') {
+                if (accelerating) {
+                    accelerating = false;
+                    accelerationSound.pause();
+                    accelerationSound.currentTime = 0; // Reset sound
+                    turboSound.play();
+                    decelerationSound.play();
+                }
+            }
+        });
+
+        function updateVolume() {
+            if (accelerating) {
+                const elapsedTime = (Date.now() - pressStartTime) / 1000;
+                const volume = Math.min(elapsedTime / 5.0, 1.0);
+                accelerationSound.volume = volume;
+
+                if (!continuousStarted && elapsedTime >= 2.0) {
+                    accelerationSound.pause();
+                    accelerationSound.currentTime = 0; // Reset sound
+                    continuousSound.play();
+                    continuousStarted = true;
+                }
+            }
+            requestAnimationFrame(updateVolume);
+        }
+
+        updateVolume();
+    </script>
+</body>
+</html>
